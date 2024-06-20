@@ -15,4 +15,8 @@ class Process extends Model
         'name',
         'description'
     ];
+
+    public function fields() {
+        return $this->hasMany(Field::class); // Указывает на наличие множества полей, связанных с процессом
+    }
 }

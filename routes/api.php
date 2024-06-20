@@ -22,3 +22,5 @@ Route::patch('/processes/{id}', [ProcessController::class, 'update']); // PATCH 
 
 // Маршрут для удаления процесса по ID
 Route::delete('/processes/{id}', [ProcessController::class, 'destroy']);
+// Добавление полей к процессу
+Route::post('/processes/add-fields', [ProcessController::class, 'addFields']);

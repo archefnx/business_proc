@@ -11,4 +11,13 @@ class Type extends Model
     use HasFactory;
     use SoftDeletes;
 
+    protected $fillable = [
+        'name',
+        'format',
+        'description'
+    ];
+
+    public function fields() {
+        return $this->hasMany(Field::class); // Указывает на наличие множества полей, связанных с данным типом
+    }
 }
