@@ -67,7 +67,7 @@ class ProcessController extends Controller
         // Проверка существования процесса
         $process = Process::where('name', $processName)->first();
         if (!$process) {
-            return response()->json(['error' => 'Process not found'], 404);
+            return response()->json(['error' => 'Process not found', '$request->input(process_name)' => $request->input('process_name')], 404);
         }
 
         $allowedTypes = ['text', 'number', 'date']; // Допустимые типы
@@ -115,5 +115,70 @@ class ProcessController extends Controller
         return response()->json(['message' => 'Fields processed successfully'], 201);
     }
 
+    public function getFields(Request $request)
+    {
+        $processName = $request->input('process_name');
 
+        // Проверка существования процесса
+        $process = Process::where('name', $processName)->first();
+        if (!$process) {
+            return response()->json(['error' => 'Process not found', 'process_name' => $processName], 404);
+        }
+
+        // Получение количества элементов на страницу из запроса или использование значения по умолчанию
+        $pageSize = $request->input('page_size', 15); // можно задать любое значение по умолчанию
+
+        // Получение полей с учетом дополнительных фильтров
+        $query = Field::with(['type'])
+            ->where('process_id', $process->id);
+
+        if ($request->has('field_name')) {
+            $query->where('name', $request->input('field_name'));
+        }
+
+        if ($request->has('field_type')) {
+            $query->whereHas('type', function ($q) use ($request) {
+                $q->where('name', $request->input('field_type'));
+            });
+        }
+
+        // Использование метода paginate() для автоматической постраничной навигации
+        $fields = $query->paginate($pageSize);
+
+        // Преобразование полей в нужный формат
+        $formattedFields = $fields->map(function ($field) {
+            switch ($field->type->name) {
+                case 'number':
+                    $format = $field->type->format ?: '%.2f'; // значение по умолчанию
+                    $formattedValue = sprintf($format, $field->value);
+                    break;
+                case 'date':
+                    $format = $field->type->format ?: 'Y-m-d'; // значение по умолчанию
+                    $formattedValue = (new \DateTime($field->value))->format($format);
+                    break;
+                case 'text':
+                default:
+                    $formattedValue = $field->value;
+                    break;
+            }
+
+            return [
+                'name' => $field->name,
+                'value' => $formattedValue
+            ];
+        });
+
+        // Возвращение результата вместе с пагинацией
+        return response()->json([
+            'data' => $formattedFields,
+            'pagination' => [
+                'current_page' => $fields->currentPage(),
+                'last_page' => $fields->lastPage(),
+                'per_page' => $fields->perPage(),
+                'total' => $fields->total(),
+                'next_page_url' => $fields->nextPageUrl(),
+                'prev_page_url' => $fields->previousPageUrl(),
+            ]
+        ]);
+    }
 }

@@ -24,3 +24,5 @@ Route::patch('/processes/{id}', [ProcessController::class, 'update']); // PATCH 
 Route::delete('/processes/{id}', [ProcessController::class, 'destroy']);
 // Добавление полей к процессу
 Route::post('/processes/add-fields', [ProcessController::class, 'addFields']);
+// Допулучить поля конкретного процесса
+Route::post('/processes/get-fields', [ProcessController::class, 'getFields']);
